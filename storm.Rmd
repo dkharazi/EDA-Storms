@@ -2,9 +2,7 @@
 title: "Storms"
 author: "Darius Kharazi"
 date: "7/11/2018"
-output:
-  html_document: default
-  pdf_document: default
+output: html_document
 ---
 
 ## Synopsis
