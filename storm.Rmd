@@ -1,0 +1,218 @@
+---
+title: "Storms"
+author: "Darius Kharazi"
+date: "7/11/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Synopsis
+
+Severe weather events can cause both economic and public health issues to those communities directly involved in the storm, and those that rely on their resources, as well. In recent years, there has been an increasing amount of storms that have destroyed cities and taken hundreds of lives. These storms will continue to grow in frequency and magnitude due to changes in the climate. Therefore, we should make a greater effort to better understand storms in order to minimize the amount of destruction caused by them through preparation.
+
+The analysis will explore the Atmospheric Administration’s (NOAA) and the U.S. National Oceanic storm database to answer the given questions:
+
+  1. Across the United States, which types of events (as indicated in the Event variable) are most harmful with respect to population health?
+  2. Across the United States, which types of events have the greatest economic consequences?
+
+After analyzing each type of storm, we'll be able to prove that tornados are the most harmful in reference to public health, and floods are the most harmful in reference to the economy.
+
+## Import Statements
+
+```{r libSetup, include=FALSE}
+## Import libraries
+library(knitr)
+library(readr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+## Import data
+storms <- read_csv("~/Desktop/storm.csv", col_types = c(.default = col_character()))
+storms.df <- data.frame(storms)
+```
+
+We've imported libraries that will help us read in the raw data and provide a means to publishing our results to RPubs. We've also imported libraries that help with creating transformations and reports about the raw data, specifically libraries that tidy, transform, and visualize the data. The "readr" package has been used to read in our raw data.
+
+## Data Processing
+
+```{r cleanCols}
+## Remove columns with NA
+storms.df <- storms.df %>%
+  select(STATE, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
+
+## Rename columns
+names(storms.df) <- c("State", "Type", "Deaths", "Injuries", 
+                      "P.Damage", "P.Units", "C.Damage", "C.Units")
+```
+
+Some of the variables in the dataset are filled with NA values, which does not provide any useful information to us. Therefore, we should remove these columns from the dataset and only rename the useful variables to the following:
+
+  - State: The abbreviated name of the state where the storm was located.
+  - Type: The type of storm that occurred..
+  - Deaths: The number of fatalities caused by the storm.
+  - Injuries: The number of people injured in the storm.
+  - P.Damage: The property damage measured in dollars.
+  - P.Units: The units of property damage (B,M,K,H).
+  - C.Damage: The crop damage measured in dollars.
+  - C.Units: The units of crop damage (B,M,K,H).
+  
+Now that we have finished clening the variables, we should move on to cleaning the data.
+
+```{r cleanType}
+## Redundant types of storms
+head(sort(table(storms.df$Type), decreasing = TRUE), 50)
+length(unique(storms.df$Type))
+```
+
+If we examine the unique values for the types of storms in the data, we're able to see that there are many redundant types of storms that are improperly formatted. Rather than having many messy entries without any real format, we would like to see grouped entries into a few types of storms, such as "tornado", "flood", etc.
+
+```{r replaceType}
+## Replace the units for property damage
+storms.df$P.Units <- recode(storms.df$P.Units, '0'=1, '-'=1, '?'=1, '+'=1, 
+                            '1'=10, '2'=10^2, 'h'=10^2, 'H'=10^2, '3'=10^3, 'K'=10^3, '4'=10^4, 
+                            '5'=10^5, '6'=10^6, 'm'=10^6, 'M'=10^6, '7'=10^7, '8'=10^8, 'B'=10^9)
+
+## Replace the units for crop damage
+storms.df$C.Units <- recode(storms.df$C.Units, '0'=1, '?'=1, '2'=10^2, 'k'=10^3, 'K'=10^3, 'm'=10^6, 'M'=10^6, 'B'=10^9)
+
+## Replace values with "Avalanche"
+storms.df$Type <- gsub(".*avalanche.*", "Avalanche", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*avalance.*", "Avalanche", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Landslide"
+storms.df$Type <- gsub(".*landslide.*", "Landslide", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Thunder Storm"
+storms.df$Type <- gsub(".*thunder.*", "Thunder Storm", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Tropical Storm"
+storms.df$Type <- gsub(".*tropical.*", "Tropical Storm", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Mudslide"
+storms.df$Type <- gsub(".*mud.*", "Mudslide", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Dust Storm"
+storms.df$Type <- gsub(".*dust.*", "Dust Storm", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Volcano"
+storms.df$Type <- gsub(".*volcan.*", "Volcano", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Waterspout"
+storms.df$Type <- gsub(".*waterspout.*", "Waterspout", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Fog"
+storms.df$Type <- gsub(".*fog.*", "Fog", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Rain"
+storms.df$Type <- gsub(".*rain.*", "Heavy rain", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Lightning"
+storms.df$Type <- gsub(".*lightning.*", "Lightning", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*lighting.*", "Lightning", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Tsunami"
+storms.df$Type <- gsub(".*tsunami.*", "Tsunami", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*typhoon.*", "Tsunami", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*surge.*", "Tsunami", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Hurricane"
+storms.df$Type <- gsub(".*hurricane.*", "Hurricane", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Heat"
+storms.df$Type <- gsub(".*dry.*", "Heat", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*heat.*", "Heat", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*warm.*", "Heat", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*hot.*", "Heat", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Tornado"
+storms.df$Type <- gsub(".*tornado.*", "Tornado", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*funnel.*", "Tornado", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Wind"
+storms.df$Type <- gsub(".*wind.*", "Storm Winds", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Flood"
+storms.df$Type <- gsub(".*flood.*", "Flood", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*fld.*", "Flood", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Winter Storm"
+storms.df$Type <- gsub(".*winter.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*wintry.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*sleet.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*cold.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*hail.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*snow.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*blizzard.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*ice.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*icy.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*glaze.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*freez.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*frost.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*cool.*", "Winter Storm", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Wildfire"
+storms.df$Type <- gsub(".*fire.*", "Wildfire", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "Drought"
+storms.df$Type <- gsub(".*drought.*", "Drought", storms.df$Type, ignore.case = TRUE)
+
+## Replace values with "High Tide"
+storms.df$Type <- gsub(".*tide.*", "High Tide", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*surf.*", "High Tide", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*current.*", "High Tide", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*seas.*", "High Tide", storms.df$Type, ignore.case = TRUE)
+storms.df$Type <- gsub(".*waves.*", "High Tide", storms.df$Type, ignore.case = TRUE)
+```
+
+Depending on the raw data, grouping messy data entries can require a great deal of manual string manipulation. Although we haven't classified each and every storm type into its own distinct category of storm, we have significantly reduced the number of informative storm types. The majority of the remaining types of storms are not even insightful, since they are entered as a date that the incident occurred.
+
+```{r cleanedType}
+## Redundant types of storms
+head(sort(table(storms.df$Type), decreasing = TRUE), 50)
+length(unique(storms.df$Type))
+```
+
+We can see that the majority of the entries have been distinctly categorized, and a lot of the remaining storm types are summaries based on the date, rather than the storm. For future references, we could continue to reduce the number of storm types by categorizing each entry into an its distinct type of storm. For now, we will work with the current cleaned data, since we've categorized the majority of storms. 
+
+## Results
+
+```{r health}
+## Find the storms affecting the most people
+most.harmful <- storms.df %>% 
+  mutate(Total = Injuries + Deaths) %>% 
+  group_by(Type) %>%
+  summarize(Injury = sum(Injuries), Death = sum(Deaths), Total = sum(Total))  %>% 
+  arrange(desc(Total)) %>%
+  top_n(n = 10, wt = Total) %>%
+  gather(Harm, Casualties, 2:3)
+
+## Plot storms causing the most harm
+ggplot(most.harmful, aes(x = reorder(Type, Total), y = Casualties, fill = Harm)) +
+  geom_bar(stat = "identity") + 
+  labs(x = "Storm Type", y = "Casualties", fill = "Type") +
+  coord_flip()
+```
+
+As we can see, tornados injure and kill the most people in the data. There are nearly 90,000 injuries caused by tornados, whereas heat causes the second most injuries (9,000), which is an enormous difference. Tornados are also the most significant killer out of any other storm, but it shouldbe noted that a significant percentage of the fatalities caused by storms is due to heat-related incidents (3,000).
+
+```{r econ}
+## Find the storms affecting economies the most
+most.cost <- storms.df %>% 
+  group_by(Type) %>%
+  summarize(Crop = sum(C.Damage * C.Units, na.rm = TRUE),
+            Property = sum(P.Damage * P.Units, na.rm = TRUE)) %>%
+  mutate(Total = Crop + Property) %>%
+  arrange(desc(Total)) %>%
+  top_n(n = 10, wt = Total) %>%
+  gather(CostType, Cost, 2:3)
+
+## Plot storms causing the most harm
+ggplot(most.cost, aes(x = reorder(Type, Total), y = Cost, fill = CostType)) +
+  geom_bar(stat = "identity") + 
+  labs(x = "Storm Type", y = "Cost", fill = "Type") +
+  coord_flip()
+```
+
+When examining the economic costs caused by the different types of storms, we can see that floods create the the largest percentage of property costs out of any other storm. Floods are are the most common and costliest natural disaster, since they create nearly 168 billion dollars in property costs and 12 billion dollars in crop costs. The second most costly storm is the tsunami, which creates nearly 112 billion dollars in property costs and 2 billion dollars in crop costs. Clearly, floods are significantly more costly overall than any other storm, but it should be noted that droughts are the most costly natural disaster in terms of crop costs, since they create 13 billion dollars in crop costs.
