@@ -193,6 +193,10 @@ ggplot(most.harmful, aes(x = reorder(Type, Total), y = Casualties, fill = Harm))
   coord_flip()
 ```
 
+<p align="center">
+  <img width="400" height="400" src="/graphics/plot1.png">
+</p>
+
 As we can see, tornados injure and kill the most people in the data. There are nearly 90,000 injuries caused by tornados, whereas heat causes the second most injuries (9,000), which is an enormous difference. Tornados are also the most significant killer out of any other storm, but it shouldbe noted that a significant percentage of the fatalities caused by storms is due to heat-related incidents (3,000).
 
 ```{r econ}
@@ -212,5 +216,9 @@ ggplot(most.cost, aes(x = reorder(Type, Total), y = Cost, fill = CostType)) +
   labs(x = "Storm Type", y = "Cost", fill = "Type") +
   coord_flip()
 ```
+
+<p align="center">
+  <img width="400" height="400" src="/graphics/plot2.png">
+</p>
 
 When examining the economic costs caused by the different types of storms, we can see that floods create the the largest percentage of property costs out of any other storm. Floods are are the most common and costliest natural disaster, since they create nearly 168 billion dollars in property costs and 12 billion dollars in crop costs. The second most costly storm is the tsunami, which creates nearly 112 billion dollars in property costs and 2 billion dollars in crop costs. Clearly, floods are significantly more costly overall than any other storm, but it should be noted that droughts are the most costly natural disaster in terms of crop costs, since they create 13 billion dollars in crop costs.
